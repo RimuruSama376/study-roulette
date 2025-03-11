@@ -1,11 +1,20 @@
 import { useEffect, useState } from 'react'
-import { SpinWheel } from 'react-spin-wheel'
-import 'react-spin-wheel/dist/index.css'
+import { Wheel } from 'react-custom-roulette'
 
 function App() {
-  const [choices, setChoices] = useState<string[]>([])
+  const [choices, setChoices] = useState<{ option: string }[]>([])
   const [currentChoice, setCurrentChoice] = useState<string>('')
   const [hasDuplicate, setHasDuplicate] = useState<boolean>(false)
+  const [mustSpin, setMustSpin] = useState(false)
+  const [prizeNumber, setPrizeNumber] = useState(0)
+
+  const handleSpinClick = () => {
+    if (!mustSpin) {
+      const newPrizeNumber = Math.floor(Math.random() * choices.length)
+      setPrizeNumber(newPrizeNumber)
+      setMustSpin(true)
+    }
+  }
 
   // Load choices from local storage on initial render
   useEffect(() => {
@@ -16,14 +25,14 @@ function App() {
   }, [])
 
   const handleAddChoice = () => {
-    if (choices.find((choice) => choice === currentChoice)) {
+    if (choices.find((choice) => choice.option === currentChoice)) {
       setHasDuplicate(true)
       setTimeout(() => {
         setHasDuplicate(false)
       }, 2000)
       return
     }
-    const newChoices = [...choices, currentChoice]
+    const newChoices = [...choices, { option: currentChoice }]
     setChoices(newChoices)
     localStorage.setItem('choices', JSON.stringify(newChoices))
     setCurrentChoice('')
@@ -41,8 +50,8 @@ function App() {
   }
 
   return (
-    <div className='flex justify-center w-dvw min-h-dvh h-full py-8'>
-      <div className='max-w-3xl w-full flex flex-col items-center gap-10'>
+    <div className='flex justify-center min-w-dvw  min-h-dvh h-full py-8'>
+      <div className='max-w-3xl w-full flex flex-col items-center gap-4'>
         <h1 className='text-4xl font-bold text-center font-[arial]'>Study Roulette</h1>
 
         {/* info */}
@@ -54,7 +63,7 @@ function App() {
         </p>
 
         {/* input logic */}
-        <div className='flex flex-col gap-10 w-full'>
+        <div className='flex flex-col gap-4 w-full'>
           <div className='flex flex-row items-center justify-between gap-10 w-full'>
             <input
               type='text'
@@ -99,13 +108,13 @@ function App() {
             <div className='flex flex-wrap gap-2 pl-3'>
               {choices.map((choice, index) => (
                 <button
-                  key={index + choice}
+                  key={index + choice.option}
                   className='bg-gray-600 px-2 rounded cursor-pointer'
                   onClick={() => {
                     handleRemoveChoice(index)
                   }}
                 >
-                  {choice}
+                  {choice.option}
                 </button>
               ))}
             </div>
@@ -116,14 +125,24 @@ function App() {
         </div>
         {/* spinner */}
         {choices.length >= 2 && (
-          <div className=''>
-            <SpinWheel
-              items={choices}
-              onFinishSpin={(item) => {
-                alert(`You should study: ${String(item)}`)
+          <div className='text-wrap flex flex-col gap-5 items-center'>
+            <Wheel
+              mustStartSpinning={mustSpin}
+              backgroundColors={['#06504b', '#3e3e3e', '#06504b', '#3e3e3e', '#06504b', '#3e3e3e']}
+              prizeNumber={prizeNumber}
+              data={choices}
+              onStopSpinning={() => {
+                setMustSpin(false)
               }}
-              borderColor='gray'
+              textColors={['#ffffff']}
+              fontSize={16}
             />
+            <button
+              onClick={handleSpinClick}
+              className='bg-gray-700 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-colors duration-300 cursor-pointer'
+            >
+              SPIN
+            </button>
           </div>
         )}
       </div>
